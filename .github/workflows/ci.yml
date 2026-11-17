@@ -1,0 +1,40 @@
+name: ShadowMarket CI/CD Quality Gate
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  validate:
+    name: Typecheck, Unit Tests & Production Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: TypeScript Static Typecheck
+        run: npx tsc --noEmit
+
+      - name: Run Unit Tests (Vitest)
+        run: npm run test
+
+      - name: Compile Next.js Production Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://nsmsrmxwrzjvwgqczcfh.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'dummy_anon_key' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'dummy_service_key' }}
+          LICENSE_ENCRYPTION_KEY: ${{ secrets.LICENSE_ENCRYPTION_KEY || '032d6aa0ba82eb1a193363f78ab84410e1bc90c644a3af23e47a8a01f0503d5b' }}
+          PAYMENT_WEBHOOK_SECRET: ${{ secrets.PAYMENT_WEBHOOK_SECRET || 'whsec_dummy' }}
+          PAYMENT_SANDBOX_MODE: 'true'
