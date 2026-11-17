@@ -17,8 +17,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { formatPriceTHB } from '@/lib/utils'
-import { LicenseRevealPreview } from '@/components/shop/LicenseRevealPreview'
+import { LicenseDeliveryVault } from '@/components/shop/LicenseDeliveryVault'
 import { OrderPaymentTrigger } from '@/components/shop/OrderPaymentTrigger'
+import { PrintInvoiceButton } from '@/components/shop/PrintInvoiceButton'
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>
@@ -53,7 +54,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       {/* Top back navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between print:hidden">
         <Link
           href="/orders"
           className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-cyan-400 transition-colors"
@@ -61,9 +62,12 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           <ArrowLeft className="w-3.5 h-3.5" /> กลับไปยังรายการคำสั่งซื้อทั้งหมด
         </Link>
 
-        <span className="text-xs font-mono text-cyan-400">
-          ORDER_LEDGER // RECEIPT_PRINT_MODE
-        </span>
+        <div className="flex items-center gap-3">
+          <PrintInvoiceButton />
+          <span className="text-xs font-mono text-cyan-400 hidden sm:inline">
+            ORDER_LEDGER // RECEIPT_PRINT_MODE
+          </span>
+        </div>
       </div>
 
       {/* Invoice Card */}
@@ -206,13 +210,19 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
         </div>
 
         {/* Digital Key Vault Section */}
-        <div className="pt-6 border-t border-slate-800 space-y-4">
-          <div className="flex items-center gap-2 text-sm font-mono font-bold text-emerald-400">
-            <Terminal className="w-4 h-4" />
-            <span>คีย์ดิจิทัลของคุณ (ENCRYPTED LICENSE DELIVERY)</span>
-          </div>
-
-          <LicenseRevealPreview />
+        <div className="pt-6 border-t border-slate-800 space-y-4 print:border-none">
+          <LicenseDeliveryVault
+            orderId={order.id}
+            orderStatus={order.status}
+            items={
+              order.order_items?.map((item: any) => ({
+                id: item.id,
+                productTitle: item.product_title_snapshot,
+                unitPrice: Number(item.unit_price),
+                licenseKeyId: item.license_key_id,
+              })) || []
+            }
+          />
         </div>
       </div>
     </div>
