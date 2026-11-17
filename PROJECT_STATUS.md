@@ -1,8 +1,8 @@
 # ShadowMarket - Project Status Tracker
 
-> **Current Phase**: Milestone 2 Completed (Storefront & UI Design System)  
-> **Status**: Ready for Owner Review & Presentation  
-> **Next Phase**: Milestone 3 (Database Schema, RLS Security & Authentication via Supabase)
+> **Current Phase**: Milestone 3 Completed (Supabase Integration, Database Schema, RLS Security & Authentication)  
+> **Status**: Ready for Owner Verification & SQL Run  
+> **Next Phase**: Milestone 4 (Shopping Cart & Order Management Pipeline)
 
 ---
 
@@ -12,8 +12,8 @@
 | :--- | :--- | :--- | :--- |
 | **M1** | **Foundations, Skills & Roadmap** | **COMPLETED** | Environment inspection, 10 specialized skills, project rules & anti-cheat bans, architecture & roadmap docs. |
 | **M2** | **Storefront & UI Design System** | **COMPLETED** | Next.js App Router, Tailwind CSS Cyber-Industrial theme, 5 responsive pages, shared design system, sandbox preview. |
-| **M3** | **Database & Authentication** | *Pending Approval* | Supabase PostgreSQL schema, RLS policies on all tables, auth workflows, customer profile triggers. |
-| **M4** | **Cart & Order Management Pipeline** | *Upcoming* | Cart synchronization, checkout form with Zod validation, order state machine, stock concurrency controls. |
+| **M3** | **Database & Authentication** | **COMPLETED** | Supabase connected (Singapore `sin1`), AES-256-GCM engine tested, RLS SQL migration, login & register pages with Server Actions. |
+| **M4** | **Cart & Order Management Pipeline** | *Pending Approval* | Cart synchronization, checkout form with Zod validation, order state machine, stock concurrency controls. |
 | **M5** | **Procurement & Batch Key Encryption** | *Upcoming* | AES-256-GCM encryption service, batch key importer, manual procurement queue for on-demand licenses. |
 | **M6** | **Payment Sandbox & Webhooks** | *Upcoming* | Payment sandbox simulator (Test cards & Mock PromptPay QR), idempotent webhook handler with HMAC signatures. |
 | **M7** | **Secure License Delivery** | *Upcoming* | Order history view, obfuscated key reveal UI, copy-to-clipboard, PDF invoice, key reveal audit logs. |
@@ -22,37 +22,38 @@
 
 ---
 
-## 2. Milestone 2 Detailed Achievements
+## 2. Milestone 3 Detailed Achievements
 
-- [x] **Next.js App Router & TypeScript Initialization**:
-  - Clean project setup with Next.js 15+, React 19, strict TypeScript, and Tailwind CSS.
-  - Zero external untrusted scripts; clean dependency audit.
-- [x] **Cyber-Industrial / Dark High-Tech Design System**:
-  - Color Tokens: Void Black (`#050811`), Electric Cyan (`#00f0ff`), Toxic Emerald (`#05ffa1`), Industrial Amber (`#ffb800`).
-  - Reusable Components: `Badge`, `Button`, `Card`, `Input`, `Navbar`, `Footer`, `CartDrawer`, `ProductCard`.
-  - Responsive design verified for Mobile (375px), Tablet (768px), and Desktop (1280px+).
-- [x] **Core Storefront Pages Implemented**:
-  1. `src/app/page.tsx`: Homepage with Hero, Interactive Vault Decryption Simulator, Category Matrix, Featured Licenses, and Compliance Manifesto.
-  2. `src/app/products/page.tsx`: Catalog with real-time text search, category tabs, platform chips, fulfillment filter, and price sorting.
-  3. `src/app/products/[slug]/page.tsx`: Product detail view with activation guide, system specs, legal reseller basis, and quantity stepper.
-  4. `src/app/cart/page.tsx`: Shopping cart with quantity modification, promo voucher support (`SHADOW10`), subtotal calculations, and escrow safety notice.
-  5. `src/app/checkout/page.tsx`: Sandbox simulation checkout with PromptPay QR simulator, test card 4242, email dispatch, terms agreement, and simulated instant key delivery preview.
-  6. `src/app/not-found.tsx`: Custom 404 error page in dark high-tech styling.
-- [x] **100% Authorized Products Only**:
-  - Catalog populated with strictly legal digital software licenses (Windows 11 Pro Retail, JetBrains All Products Pack, Office 2024, NordVPN, Cyberpunk Steam Key, AWS Developer Credits, 1Password, Sublime Text 4).
-  - ZERO game cheats, memory injectors, or anti-cheat bypasses.
-- [x] **Zero Real Money Spent / Sandbox Mode**:
-  - Payment gateway remains in sandbox simulation mode; zero live financial charges.
-- [x] **Production Build Verification**:
-  - `npm run build` executed successfully with 0 TypeScript errors and 0 build warnings.
-  - Production server verified on `http://localhost:3000`.
+- [x] **Supabase Project Connected**:
+  - Region: Singapore (`ap-southeast-1` / `sin1`) for ultra-low latency in Thailand.
+  - Project URL: `https://nsmsrmxwrzjvwgqczcfh.supabase.co`.
+  - Client SDKs `@supabase/supabase-js` and `@supabase/ssr` installed.
+- [x] **Zero Secret Leakage Protection**:
+  - All keys strictly isolated in `.env.local` (ignored by Git via `.gitignore`).
+  - Generated 64-character (32-byte) hex key for `LICENSE_ENCRYPTION_KEY`.
+- [x] **Database Schema & Strict RLS Architecture**:
+  - Complete SQL migration script created in `supabase/migrations/001_initial_schema.sql`.
+  - Tables defined: `profiles`, `categories`, `products`, `license_keys`, `orders`, `order_items`, `audit_logs`.
+  - Row Level Security (RLS) active on 100% of tables.
+  - Customers have ZERO direct SELECT on `license_keys` (decrypted only via authenticated Server Action).
+  - PostgreSQL trigger `on_auth_user_created` automatically creates profile row on user registration.
+- [x] **Authentication Pages & Workflows**:
+  - `src/actions/auth.ts`: Server Actions for `loginAction`, `signupAction`, `signoutAction`, and `getUserAction`.
+  - `src/app/(auth)/login/page.tsx`: Cyber-Industrial login screen with error handling and SSL security badge.
+  - `src/app/(auth)/register/page.tsx`: Registration screen with password confirmation and automatic trigger sync.
+  - `src/components/layout/Navbar.tsx`: Live auth state detection with user email badge and Sign Out button.
+- [x] **Cryptographic Verification**:
+  - Verified AES-256-GCM encryption and decryption round-trip via `scripts/verify_supabase.mjs` (100% pass).
+  - Verified Supabase admin connection to auth and database API.
+- [x] **Build Verification**:
+  - `npm run build` passed with zero errors for all 9 routes.
 
 ---
 
-## 3. Next Steps (Upon Owner Approval)
+## 3. Next Steps (Upon Owner SQL Execution & Approval)
 
-Once approved by the store owner, we will proceed to **Milestone 3**:
-1. Connect Supabase PostgreSQL database.
-2. Apply database schemas (`profiles`, `categories`, `products`, `license_keys`, `orders`, `order_items`, `audit_logs`).
-3. Enforce Row Level Security (RLS) on 100% of tables.
-4. Implement customer authentication (Sign up, Log in, Profile sync).
+Once the owner runs the migration script in Supabase SQL Editor and approves:
+1. Proceed to **Milestone 4 (Shopping Cart & Order Management Pipeline)**:
+   - Connect frontend cart and catalog directly to Supabase products table.
+   - Enforce atomic key reservation (`FOR UPDATE SKIP LOCKED`) during checkout.
+   - Transition order status through state machine (`pending` -> `paid` -> `completed`).

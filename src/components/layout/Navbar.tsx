@@ -1,26 +1,57 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   Shield,
   ShoppingBag,
   Menu,
   X,
-  Terminal,
-  KeyRound,
-  ExternalLink,
+  User,
+  LogOut,
+  LogIn,
 } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/utils'
+import { createClient } from '@/lib/supabase/client'
+import { signoutAction } from '@/actions/auth'
 
 export function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
   const { totalItems, setIsCartOpen } = useCart()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    try {
+      const supabase = createClient()
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        setUser(user)
+      })
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          setUser(session?.user ?? null)
+        }
+      )
+
+      return () => {
+        subscription.unsubscribe()
+      }
+    } catch {
+      // Supabase credentials might not be configured in non-browser environments
+    }
+  }, [])
+
+  const handleSignOut = async () => {
+    await signoutAction()
+    setUser(null)
+    router.refresh()
+  }
 
   const navLinks = [
     { label: 'หน้าแรก', href: '/' },
@@ -100,6 +131,31 @@ export function Navbar() {
 
         {/* Right Action Controls */}
         <div className="flex items-center gap-2.5">
+          {/* User Auth Info (Desktop) */}
+          <div className="hidden sm:flex items-center gap-2">
+            {user ? (
+              <div className="flex items-center gap-2 font-mono text-xs">
+                <span className="px-2 py-1 bg-slate-900 border border-slate-800 text-cyan-400 rounded flex items-center gap-1.5 truncate max-w-[150px]">
+                  <User className="w-3.5 h-3.5 flex-shrink-0" />
+                  <span className="truncate">{user.email}</span>
+                </span>
+                <button
+                  onClick={handleSignOut}
+                  className="p-1.5 text-slate-400 hover:text-rose-400 rounded hover:bg-slate-900 transition-colors"
+                  title="ออกจากระบบ"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="font-mono text-xs" leftIcon={<LogIn className="w-3.5 h-3.5 text-cyan-400" />}>
+                  เข้าสู่ระบบ
+                </Button>
+              </Link>
+            )}
+          </div>
+
           {/* Cart Button */}
           <Button
             variant="secondary"
@@ -134,6 +190,32 @@ export function Navbar() {
           <div className="p-2.5 bg-slate-900/80 border border-slate-800 rounded text-xs font-mono text-cyan-400 flex items-center justify-between">
             <span>[NODE: BANGKOK / SIN1]</span>
             <span className="text-emerald-400">● ONLINE</span>
+          </div>
+
+          {/* Mobile Auth Button */}
+          <div className="p-2 bg-slate-900/60 border border-slate-800 rounded flex items-center justify-between text-xs font-mono">
+            {user ? (
+              <>
+                <span className="text-slate-300 truncate max-w-[200px]">{user.email}</span>
+                <button
+                  onClick={handleSignOut}
+                  className="text-rose-400 flex items-center gap-1 hover:underline"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> ออกจากระบบ
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center justify-between w-full">
+                <span className="text-slate-400">ยังไม่ได้เข้าสู่ระบบ</span>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-cyan-400 font-bold hover:underline"
+                >
+                  เข้าสู่ระบบ / สมัคร
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="space-y-1">
