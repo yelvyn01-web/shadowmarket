@@ -31,8 +31,8 @@ export default function RegisterPage() {
       return
     }
 
-    if (password.length < 6) {
-      setErrorMsg('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร')
+    if (password.length < 12) {
+      setErrorMsg('รหัสผ่านต้องมีความยาวอย่างน้อย 12 ตัวอักษรเพื่อความปลอดภัย')
       setIsLoading(false)
       return
     }
@@ -112,10 +112,11 @@ export default function RegisterPage() {
             label="รหัสผ่าน (Password)"
             type="password"
             required
-            placeholder="อย่างน้อย 6 ตัวอักษร"
+            placeholder="อย่างน้อย 12 ตัวอักษร"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             leftIcon={<Lock className="w-4 h-4" />}
+            helperText="แนะนำให้ผสมตัวอักษรพิมพ์ใหญ่ พิมพ์เล็ก ตัวเลข และสัญลักษณ์"
           />
 
           <Input

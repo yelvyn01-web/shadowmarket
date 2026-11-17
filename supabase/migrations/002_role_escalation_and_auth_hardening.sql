@@ -1,30 +1,43 @@
 -- ==============================================================================
--- SHADOWMARKET - MIGRATION 002: AUTH HARDENING & ROLE ESCALATION PROTECTION
+-- SHADOWMARKET - MIGRATION 002: AUTH HARDENING & ANTI-RECURSIVE RLS
 -- ==============================================================================
 
--- 1. Anti-Role-Escalation RLS Policy with WITH CHECK
--- Prevents regular users from modifying their 'role' to 'admin' via direct API updates
-DROP POLICY IF EXISTS "Users update own profile" ON public.profiles;
-CREATE POLICY "Users update own profile" ON public.profiles FOR UPDATE 
-USING (auth.uid() = id) 
-WITH CHECK (auth.uid() = id AND role = 'customer');
+-- 1. Secure is_admin() Function (Prevents Recursive RLS & Search Path Injection)
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'admin'
+  );
+$$;
 
--- 2. Anti-Role-Escalation Database Trigger
--- Strictly raises exception if non-admin tries to change role
+-- Revoke public execution and grant to authenticated and service_role
+REVOKE EXECUTE ON FUNCTION public.is_admin() FROM public;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO service_role;
+
+-- 2. Anti-Role-Escalation Trigger Function
 CREATE OR REPLACE FUNCTION public.protect_profile_role_escalation()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
 BEGIN
   IF NEW.role IS DISTINCT FROM OLD.role THEN
-    IF NOT EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() AND role = 'admin'
-    ) THEN
+    -- Only existing admins can alter roles
+    IF NOT public.is_admin() THEN
       RAISE EXCEPTION 'SECURITY VIOLATION: Role escalation is strictly prohibited.';
     END IF;
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
 DROP TRIGGER IF EXISTS on_profile_role_update ON public.profiles;
 CREATE TRIGGER on_profile_role_update
@@ -32,7 +45,35 @@ BEFORE UPDATE ON public.profiles
 FOR EACH ROW
 EXECUTE FUNCTION public.protect_profile_role_escalation();
 
--- 3. Performance & Foreign Key Constraints / Indexes
+-- 3. Hardened Profiles RLS Policies (Non-Recursive & Protected)
+DROP POLICY IF EXISTS "Users update own profile" ON public.profiles;
+CREATE POLICY "Users update own profile" ON public.profiles 
+FOR UPDATE 
+USING (auth.uid() = id) 
+WITH CHECK (auth.uid() = id AND role = 'customer');
+
+DROP POLICY IF EXISTS "Admins full access to profiles" ON public.profiles;
+CREATE POLICY "Admins full access to profiles" ON public.profiles 
+FOR ALL 
+USING (public.is_admin());
+
+-- 4. Hardened Orders & License Keys Policies (Non-Recursive)
+DROP POLICY IF EXISTS "Admins manage orders" ON public.orders;
+CREATE POLICY "Admins manage orders" ON public.orders 
+FOR ALL 
+USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins full access to license keys" ON public.license_keys;
+CREATE POLICY "Admins full access to license keys" ON public.license_keys 
+FOR ALL 
+USING (public.is_admin());
+
+DROP POLICY IF EXISTS "Admins read audit logs" ON public.audit_logs;
+CREATE POLICY "Admins read audit logs" ON public.audit_logs 
+FOR SELECT 
+USING (public.is_admin());
+
+-- 5. Foreign Key & Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders(created_at DESC);

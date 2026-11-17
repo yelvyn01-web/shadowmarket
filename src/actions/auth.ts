@@ -14,7 +14,7 @@ export type AuthResponse = {
 
 const SignupSchema = z.object({
   email: z.string().email({ message: 'รูปแบบอีเมลไม่ถูกต้อง' }),
-  password: z.string().min(6, { message: 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร' }),
+  password: z.string().min(12, { message: 'รหัสผ่านต้องมีความยาวอย่างน้อย 12 ตัวอักษรเพื่อความปลอดภัยสูงสุด' }),
   fullName: z.string().optional(),
 })
 
@@ -28,7 +28,7 @@ const ForgotPasswordSchema = z.object({
 })
 
 const ResetPasswordSchema = z.object({
-  password: z.string().min(6, { message: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 6 ตัวอักษร' }),
+  password: z.string().min(12, { message: 'รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 12 ตัวอักษร' }),
 })
 
 export async function signupAction(formData: FormData): Promise<AuthResponse> {
@@ -92,21 +92,40 @@ export async function forgotPasswordAction(formData: FormData): Promise<AuthResp
   }
 
   try {
-    const supabase = await createServerClient()
+    let supabase: any
+    try {
+      supabase = await createServerClient()
+    } catch {
+      const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+      supabase = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+    }
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
     const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/reset-password`,
+      redirectTo: `${siteUrl}/reset-password`,
     })
 
     if (error) {
-      return { success: false, error: error.message }
+      console.warn('[RECOVERY LOG] resetPasswordForEmail notice:', error.message)
     }
 
+    // OWASP Anti-User-Enumeration: Always return identical generic success message
     return {
       success: true,
-      data: { message: 'ส่งลิงก์สำหรับรีเซ็ตรหัสผ่านไปยังอีเมลของคุณเรียบร้อยแล้ว' },
+      data: {
+        message: 'หากอีเมลนี้ลงทะเบียนไว้ในระบบ ลิงก์สำหรับรีเซ็ตรหัสผ่านได้ถูกจัดส่งไปยังอีเมลของคุณเรียบร้อยแล้ว',
+      },
     }
   } catch (err: any) {
-    return { success: false, error: err.message || 'เกิดข้อผิดพลาดในการส่งอีเมลรีเซ็ตรหัสผ่าน' }
+    console.error('[UNEXPECTED ERROR] forgotPasswordAction:', err?.message)
+    return {
+      success: true,
+      data: {
+        message: 'หากอีเมลนี้ลงทะเบียนไว้ในระบบ ลิงก์สำหรับรีเซ็ตรหัสผ่านได้ถูกจัดส่งไปยังอีเมลของคุณเรียบร้อยแล้ว',
+      },
+    }
   }
 }
 

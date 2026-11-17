@@ -28,9 +28,9 @@ export default function ResetPasswordPage() {
       return
     }
 
-    if (password.length < 6) {
+    if (password.length < 12) {
       setIsLoading(false)
-      setErrorMsg('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร')
+      setErrorMsg('รหัสผ่านใหม่ต้องมีความยาวอย่างน้อย 12 ตัวอักษร')
       return
     }
 
@@ -88,7 +88,7 @@ export default function ResetPasswordPage() {
               label="รหัสผ่านใหม่ (New Password)"
               type="password"
               required
-              placeholder="อย่างน้อย 6 ตัวอักษร"
+              placeholder="อย่างน้อย 12 ตัวอักษร"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               leftIcon={<Lock className="w-4 h-4" />}
