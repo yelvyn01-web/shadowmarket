@@ -1,0 +1,165 @@
+'use client'
+
+import React, { useState } from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import {
+  Shield,
+  ShoppingBag,
+  Menu,
+  X,
+  Terminal,
+  KeyRound,
+  ExternalLink,
+} from 'lucide-react'
+import { useCart } from '@/context/CartContext'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { cn } from '@/lib/utils'
+
+export function Navbar() {
+  const pathname = usePathname()
+  const { totalItems, setIsCartOpen } = useCart()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const navLinks = [
+    { label: 'หน้าแรก', href: '/' },
+    { label: 'สินค้าทั้งหมด', href: '/products' },
+    { label: 'ระบบปฏิบัติการ', href: '/products?category=operating-system' },
+    { label: 'เครื่องมือนักพัฒนา', href: '/products?category=developer-tools' },
+    { label: 'ความปลอดภัย & VPN', href: '/products?category=security-vpn' },
+  ]
+
+  return (
+    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/85 backdrop-blur-md">
+      {/* Top Cyber System Bar */}
+      <div className="hidden md:flex items-center justify-between px-6 py-1 border-b border-slate-900 bg-black/40 text-[11px] font-mono text-slate-400">
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1.5 text-emerald-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#05ffa1]" />
+            NODE: BKK-SIN1 // ACTIVE
+          </span>
+          <span className="text-slate-600">|</span>
+          <span className="text-cyan-400">
+            ENCRYPTION: AES-256-GCM
+          </span>
+          <span className="text-slate-600">|</span>
+          <span className="text-slate-300">
+            COMPLIANCE: 100% AUTHORIZED DIGITAL LICENSES
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-amber-400">
+            [STRICT POLICY: NO GAME CHEATS / ZERO BYPASSES]
+          </span>
+        </div>
+      </div>
+
+      {/* Main Navbar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        {/* Brand Logo */}
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="p-2 bg-slate-900 border border-cyan-500/50 rounded-sm text-cyan-400 group-hover:shadow-[0_0_15px_rgba(0,240,255,0.4)] group-hover:border-cyan-400 transition-all">
+            <Shield className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="font-sans font-black text-lg tracking-wider text-white">
+                SHADOW<span className="text-cyan-400">//</span>MARKET
+              </span>
+              <span className="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.2 bg-cyan-950/80 text-cyan-300 border border-cyan-500/30 rounded">
+                v2.0
+              </span>
+            </div>
+            <p className="text-[10px] text-slate-400 font-mono tracking-tight hidden sm:block">
+              SECURE DIGITAL LICENSE VAULT
+            </p>
+          </div>
+        </Link>
+
+        {/* Desktop Nav Links */}
+        <nav className="hidden lg:flex items-center gap-1 text-sm font-mono">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  'px-3.5 py-1.5 rounded-sm transition-all text-xs tracking-wider uppercase',
+                  isActive
+                    ? 'text-cyan-400 bg-cyan-950/50 border border-cyan-500/40 shadow-[0_0_10px_rgba(0,240,255,0.15)] font-bold'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-900/60'
+                )}
+              >
+                {link.label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Right Action Controls */}
+        <div className="flex items-center gap-2.5">
+          {/* Cart Button */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setIsCartOpen(true)}
+            className="relative font-mono"
+            aria-label="เปิดตะกร้าสินค้า"
+          >
+            <ShoppingBag className="w-4 h-4 text-cyan-400" />
+            <span className="hidden sm:inline ml-1">ตะกร้า</span>
+            {totalItems > 0 && (
+              <span className="ml-1 px-1.5 py-0.2 rounded-full bg-cyan-500 text-slate-950 font-black text-[10px] shadow-[0_0_8px_#00f0ff]">
+                {totalItems}
+              </span>
+            )}
+          </Button>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="lg:hidden p-2 text-slate-400 hover:text-white bg-slate-900 border border-slate-800 rounded-sm"
+            aria-label="เปิดเมนู"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden border-b border-slate-800 bg-slate-950 px-4 pt-3 pb-6 space-y-3">
+          <div className="p-2.5 bg-slate-900/80 border border-slate-800 rounded text-xs font-mono text-cyan-400 flex items-center justify-between">
+            <span>[NODE: BANGKOK / SIN1]</span>
+            <span className="text-emerald-400">● ONLINE</span>
+          </div>
+
+          <div className="space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  'block px-3 py-2 text-sm font-mono tracking-wider rounded transition-colors',
+                  pathname === link.href
+                    ? 'text-cyan-400 bg-cyan-950/40 border border-cyan-500/30'
+                    : 'text-slate-300 hover:bg-slate-900'
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="pt-2 border-t border-slate-800/80 text-[11px] font-mono text-slate-500 space-y-1">
+            <p className="text-emerald-400">✓ เฉพาะลิขสิทธิ์ซอฟต์แวร์แท้ 100%</p>
+            <p className="text-rose-400">✕ ไม่อนุญาตโปรแกรมโกงเกมและแฮกทุกชนิด</p>
+          </div>
+        </div>
+      )}
+    </header>
+  )
+}

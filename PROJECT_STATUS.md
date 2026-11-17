@@ -1,8 +1,8 @@
 # ShadowMarket - Project Status Tracker
 
-> **Current Phase**: Milestone 1 Completed (Foundations, Skills, Governance Rules & Master Roadmap)  
-> **Status**: Ready for Owner Review & Approval  
-> **Next Phase**: Milestone 2 (Storefront & UI Design System)
+> **Current Phase**: Milestone 2 Completed (Storefront & UI Design System)  
+> **Status**: Ready for Owner Review & Presentation  
+> **Next Phase**: Milestone 3 (Database Schema, RLS Security & Authentication via Supabase)
 
 ---
 
@@ -11,8 +11,8 @@
 | Milestone | Phase Name | Status | Key Deliverables |
 | :--- | :--- | :--- | :--- |
 | **M1** | **Foundations, Skills & Roadmap** | **COMPLETED** | Environment inspection, 10 specialized skills, project rules & anti-cheat bans, architecture & roadmap docs. |
-| **M2** | **Storefront & UI Design System** | *Pending Approval* | Next.js App Router initialization, Tailwind CSS high-tech dark theme, responsive catalog grid, key reveal components. |
-| **M3** | **Database & Authentication** | *Upcoming* | Supabase PostgreSQL schema, RLS policies on all tables, auth workflows, customer profile triggers. |
+| **M2** | **Storefront & UI Design System** | **COMPLETED** | Next.js App Router, Tailwind CSS Cyber-Industrial theme, 5 responsive pages, shared design system, sandbox preview. |
+| **M3** | **Database & Authentication** | *Pending Approval* | Supabase PostgreSQL schema, RLS policies on all tables, auth workflows, customer profile triggers. |
 | **M4** | **Cart & Order Management Pipeline** | *Upcoming* | Cart synchronization, checkout form with Zod validation, order state machine, stock concurrency controls. |
 | **M5** | **Procurement & Batch Key Encryption** | *Upcoming* | AES-256-GCM encryption service, batch key importer, manual procurement queue for on-demand licenses. |
 | **M6** | **Payment Sandbox & Webhooks** | *Upcoming* | Payment sandbox simulator (Test cards & Mock PromptPay QR), idempotent webhook handler with HMAC signatures. |
@@ -22,40 +22,37 @@
 
 ---
 
-## 2. Milestone 1 Detailed Achievements
+## 2. Milestone 2 Detailed Achievements
 
-- [x] **Environment Inspection**: Verified Node.js (`v26.13.0`), npm (`11.20.0`), Git (`2.56.0.windows.4`).
-- [x] **Specialized Workspace Skills**: Created and verified all 10 specialized skill domains under `.agents/skills/`:
-  1. `project-management` & `project-planning` (Project Management)
-  2. `ui-ux-design` (UI/UX Design)
-  3. `nextjs-development` (Next.js App Router)
-  4. `backend-development` & `backend` (Backend Architecture)
-  5. `supabase-development` (Supabase PostgreSQL & Auth)
-  6. `secure-payments` & `payments` (Payment Gateways & Sandboxes)
-  7. `license-procurement` & `procurement` (License Procurement & Key Inventory)
-  8. `security-audit` & `security` (Security & OWASP Hardening)
-  9. `testing-qa` & `qa` (Automated Testing & QA)
-  10. `deployment` (Vercel & CI/CD Deployment)
-  *(Bonus: `ecommerce-architecture` for e-commerce domain models)*
-- [x] **Skill Quality & Discovery Verification**: Every skill verified to possess:
-  - Valid YAML frontmatter (`name`, `description`).
-  - Actionable checklists.
-  - Official documentation references.
-- [x] **Project Rules Established**:
-  - `AGENTS.md`: Master agent instructions and core boundaries.
-  - `.agents/rules/compliance-and-safety.md`: Strict prohibition against game cheats, hacks, and anti-cheat bypasses. Mandate for legally authorized digital licenses only.
-  - `.agents/rules/code-standards.md`: Next.js App Router, strict TypeScript, Tailwind CSS, Zod validation, zero untrusted scripts.
-  - `.agents/rules/owner-communication.md`: Simple Thai explanations for all manual steps and status reports.
-- [x] **System Architecture**: Detailed technical specification written to `docs/ARCHITECTURE.md`.
-- [x] **Master Roadmap**: Comprehensive 9-milestone roadmap written to `docs/ROADMAP.md`.
-- [x] **Website Construction Boundary**: Website development paused as instructed, pending owner review of Milestone 1.
+- [x] **Next.js App Router & TypeScript Initialization**:
+  - Clean project setup with Next.js 15+, React 19, strict TypeScript, and Tailwind CSS.
+  - Zero external untrusted scripts; clean dependency audit.
+- [x] **Cyber-Industrial / Dark High-Tech Design System**:
+  - Color Tokens: Void Black (`#050811`), Electric Cyan (`#00f0ff`), Toxic Emerald (`#05ffa1`), Industrial Amber (`#ffb800`).
+  - Reusable Components: `Badge`, `Button`, `Card`, `Input`, `Navbar`, `Footer`, `CartDrawer`, `ProductCard`.
+  - Responsive design verified for Mobile (375px), Tablet (768px), and Desktop (1280px+).
+- [x] **Core Storefront Pages Implemented**:
+  1. `src/app/page.tsx`: Homepage with Hero, Interactive Vault Decryption Simulator, Category Matrix, Featured Licenses, and Compliance Manifesto.
+  2. `src/app/products/page.tsx`: Catalog with real-time text search, category tabs, platform chips, fulfillment filter, and price sorting.
+  3. `src/app/products/[slug]/page.tsx`: Product detail view with activation guide, system specs, legal reseller basis, and quantity stepper.
+  4. `src/app/cart/page.tsx`: Shopping cart with quantity modification, promo voucher support (`SHADOW10`), subtotal calculations, and escrow safety notice.
+  5. `src/app/checkout/page.tsx`: Sandbox simulation checkout with PromptPay QR simulator, test card 4242, email dispatch, terms agreement, and simulated instant key delivery preview.
+  6. `src/app/not-found.tsx`: Custom 404 error page in dark high-tech styling.
+- [x] **100% Authorized Products Only**:
+  - Catalog populated with strictly legal digital software licenses (Windows 11 Pro Retail, JetBrains All Products Pack, Office 2024, NordVPN, Cyberpunk Steam Key, AWS Developer Credits, 1Password, Sublime Text 4).
+  - ZERO game cheats, memory injectors, or anti-cheat bypasses.
+- [x] **Zero Real Money Spent / Sandbox Mode**:
+  - Payment gateway remains in sandbox simulation mode; zero live financial charges.
+- [x] **Production Build Verification**:
+  - `npm run build` executed successfully with 0 TypeScript errors and 0 build warnings.
+  - Production server verified on `http://localhost:3000`.
 
 ---
 
 ## 3. Next Steps (Upon Owner Approval)
 
-Once approved by the store owner, we will proceed to **Milestone 2**:
-1. Initialize Next.js 15+ App Router project with TypeScript and Tailwind CSS.
-2. Establish the high-tech dark theme with responsive layout.
-3. Build the digital license catalog, product cards, category filters, and license reveal UI components.
-4. Report milestone results in Thai and request approval before database integration.
+Once approved by the store owner, we will proceed to **Milestone 3**:
+1. Connect Supabase PostgreSQL database.
+2. Apply database schemas (`profiles`, `categories`, `products`, `license_keys`, `orders`, `order_items`, `audit_logs`).
+3. Enforce Row Level Security (RLS) on 100% of tables.
+4. Implement customer authentication (Sign up, Log in, Profile sync).
