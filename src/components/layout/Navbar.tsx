@@ -11,6 +11,7 @@ import {
   User,
   LogOut,
   LogIn,
+  Database,
 } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { Button } from '@/components/ui/Button'
@@ -157,6 +158,18 @@ export function Navbar() {
             )}
           </div>
 
+          {/* Admin Procurement Link */}
+          <Link href="/admin/procurement">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="font-mono text-xs text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-400 bg-amber-950/20"
+              leftIcon={<Database className="w-3.5 h-3.5 text-amber-400" />}
+            >
+              <span className="hidden sm:inline">คลังคีย์</span> Admin
+            </Button>
+          </Link>
+
           {/* Cart Button */}
           <Button
             variant="secondary"
@@ -220,6 +233,14 @@ export function Navbar() {
           </div>
 
           <div className="space-y-1">
+            <Link
+              href="/admin/procurement"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-sm font-mono tracking-wider rounded text-amber-400 bg-amber-950/40 border border-amber-500/40 mb-2"
+            >
+              <Database className="w-4 h-4 text-amber-400" />
+              <span>ระบบจัดซื้อ & คลังคีย์ (Admin)</span>
+            </Link>
             {navLinks.map((link) => (
               <Link
                 key={link.href}
