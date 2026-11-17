@@ -20,6 +20,7 @@ import {
   Terminal,
   ShoppingBag,
   AlertCircle,
+  Sparkles,
 } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { Button } from '@/components/ui/Button'
@@ -27,6 +28,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { formatPriceTHB } from '@/lib/utils'
 import { createOrderAction } from '@/actions/orders'
+import { SandboxPaymentModal } from '@/components/shop/SandboxPaymentModal'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -41,6 +43,7 @@ export default function CheckoutPage() {
   const [createdOrder, setCreatedOrder] = useState<any>(null)
   const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({})
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null)
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
 
   const handleSimulatePayment = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,6 +74,7 @@ export default function CheckoutPage() {
         amount: subtotal,
       })
       clearCart()
+      setIsPaymentModalOpen(true)
     } else {
       setErrorMessage(res.error || 'เกิดข้อผิดพลาดในการประมวลผลคำสั่งซื้อ')
     }
@@ -181,14 +185,31 @@ export default function CheckoutPage() {
           </div>
 
           <div className="pt-4 flex flex-wrap gap-3">
+            <Button
+              variant="primary"
+              onClick={() => setIsPaymentModalOpen(true)}
+              leftIcon={<Sparkles className="w-4 h-4 text-cyan-300" />}
+            >
+              เปิดหน้าต่างชำระเงินจำลอง (Sandbox Pay)
+            </Button>
             <Link href={`/orders/${createdOrder.orderId}`}>
-              <Button variant="primary">ดูรายละเอียดใบเสร็จคำสั่งซื้อ</Button>
+              <Button variant="secondary">ดูรายละเอียดใบเสร็จคำสั่งซื้อ</Button>
             </Link>
             <Link href="/products">
-              <Button variant="secondary">เลือกซื้อสินค้าต่อ</Button>
+              <Button variant="ghost">เลือกซื้อสินค้าต่อ</Button>
             </Link>
           </div>
         </div>
+
+        {/* Sandbox Payment Modal */}
+        <SandboxPaymentModal
+          orderId={createdOrder.orderId}
+          totalAmount={createdOrder.amount}
+          customerEmail={createdOrder.email}
+          defaultMethod={paymentMethod}
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+        />
       </div>
     )
   }

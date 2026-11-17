@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { formatPriceTHB } from '@/lib/utils'
 import { LicenseRevealPreview } from '@/components/shop/LicenseRevealPreview'
+import { OrderPaymentTrigger } from '@/components/shop/OrderPaymentTrigger'
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>
@@ -46,7 +47,8 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     notFound()
   }
 
-  const isPaid = order.status === 'paid' || order.status === 'completed'
+  const isPaid = order.status === 'paid' || order.status === 'completed' || order.status === 'processing_fulfillment'
+  const isCompleted = order.status === 'completed'
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
@@ -95,6 +97,34 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
             <span className="block text-emerald-400">Singapore SIN1 Node</span>
           </div>
         </div>
+
+        {/* Pending Payment Action Banner */}
+        {order.status === 'pending' && (
+          <OrderPaymentTrigger
+            orderId={order.id}
+            totalAmount={Number(order.total_amount)}
+            customerEmail={order.customer_email}
+            defaultMethod={order.payment_method?.includes('card') ? 'card' : 'promptpay'}
+          />
+        )}
+
+        {/* Processing Fulfillment Banner */}
+        {order.status === 'processing_fulfillment' && (
+          <div className="p-4 bg-cyan-950/40 border border-cyan-500/50 rounded-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-bold text-white font-sans flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                ชำระเงินสำเร็จแล้ว // อยู่ในขั้นตอนจัดส่งคีย์ลิขสิทธิ์
+              </h4>
+              <p className="text-xs text-slate-300 font-mono mt-1">
+                คำสั่งซื้อได้รับการยืนยันยอดเงินผ่าน Webhook แล้ว เจ้าหน้าที่กำลังจัดส่งคีย์แท้เข้ารหัสให้คุณ
+              </p>
+            </div>
+            <Badge variant="cyan" size="sm" showDot>
+              PROCESSING FULFILLMENT
+            </Badge>
+          </div>
+        )}
 
         {/* Customer & Payment Details Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-950/80 border border-slate-800 rounded-sm text-xs font-mono">
