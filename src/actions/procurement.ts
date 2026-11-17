@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { encryptLicenseKey, hashLicenseKey } from '@/lib/crypto/license-crypto'
+import { requireAdmin } from '@/lib/auth/roles'
 
 const BatchImportSchema = z.object({
   productId: z.string().uuid({ message: 'กรุณาเลือกรหัสสินค้าที่ถูกต้อง' }),
@@ -41,6 +42,7 @@ export async function importBatchKeysAction(formData: FormData): Promise<BatchIm
   }
 
   try {
+    await requireAdmin()
     const admin = createAdminClient()
 
     // 1. Verify Product Exists
@@ -146,6 +148,7 @@ export async function importBatchKeysAction(formData: FormData): Promise<BatchIm
 
 export async function getLicenseInventoryAction() {
   try {
+    await requireAdmin()
     const admin = createAdminClient()
     const { data, error } = await admin
       .from('license_keys')
@@ -174,6 +177,7 @@ export async function getLicenseInventoryAction() {
 
 export async function getManualFulfillmentQueueAction() {
   try {
+    await requireAdmin()
     const admin = createAdminClient()
     const { data, error } = await admin
       .from('orders')
@@ -214,6 +218,7 @@ export async function fulfillManualOrderAction(input: {
   }
 
   try {
+    await requireAdmin()
     const admin = createAdminClient()
     const keyHash = hashLicenseKey(plaintextKey)
 

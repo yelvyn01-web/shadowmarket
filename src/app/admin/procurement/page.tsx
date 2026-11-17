@@ -1,6 +1,8 @@
 import React from 'react'
 import { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdmin } from '@/lib/auth/roles'
 import {
   getLicenseInventoryAction,
   getManualFulfillmentQueueAction,
@@ -15,6 +17,13 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function ProcurementPage() {
+  // Authoritative Server-side Role Guard
+  try {
+    await requireAdmin()
+  } catch {
+    redirect('/login?next=/admin/procurement&error=admin_required')
+  }
+
   const admin = createAdminClient()
 
   // 1. Fetch all products for selector

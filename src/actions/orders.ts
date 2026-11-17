@@ -34,13 +34,28 @@ export async function createOrderAction(rawInput: unknown): Promise<CreateOrderR
 
   const { customerEmail, customerName, paymentMethod, items } = parsed.data
 
-  try {
-    const supabase = await createServerClient()
-    const admin = createAdminClient()
+  // 1. Validate that all product IDs are authentic UUIDs (Strictly Prohibit Mock IDs)
+  for (const item of items) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.productId)
+    if (!isUuid) {
+      return {
+        success: false,
+        error: `รหัสสินค้า "${item.productId}" ไม่ถูกต้องตามมาตรฐานฐานข้อมูล ไม่อนุญาตให้สั่งซื้อสินค้าจำลอง (Mock Data Prohibited)`,
+      }
+    }
+  }
 
-    // 1. Check if user is logged in
-    const { data: { user } } = await supabase.auth.getUser()
-    const userId = user ? user.id : null
+  try {
+    let userId: string | null = null
+    try {
+      const supabase = await createServerClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      userId = user ? user.id : null
+    } catch {
+      userId = null
+    }
+
+    const admin = createAdminClient()
 
     // 2. Fetch and verify prices from Supabase database (NEVER TRUST CLIENT PRICES)
     let totalAmount = 0
@@ -52,31 +67,18 @@ export async function createOrderAction(rawInput: unknown): Promise<CreateOrderR
     }[] = []
 
     for (const item of items) {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.productId)
-      let product: any = null
+      const { data: product, error: prodErr } = await admin
+        .from('products')
+        .select('id, title, base_price, sale_price, stock_quantity')
+        .eq('id', item.productId)
+        .eq('is_active', true)
+        .maybeSingle()
 
-      if (isUuid) {
-        const { data } = await admin
-          .from('products')
-          .select('id, title, base_price, sale_price, stock_quantity')
-          .eq('id', item.productId)
-          .maybeSingle()
-        product = data
-      }
-
-      if (!product) {
-        // Try looking up by title snapshot or pick matching product from DB
-        const { data } = await admin
-          .from('products')
-          .select('id, title, base_price, sale_price, stock_quantity')
-          .order('created_at', { ascending: true })
-          .limit(1)
-          .single()
-        product = data
-      }
-
-      if (!product) {
-        return { success: false, error: `ไม่พบข้อมูลสินค้าในระบบ (ID: ${item.productId})` }
+      if (prodErr || !product) {
+        return {
+          success: false,
+          error: `ไม่พบข้อมูลสินค้าลิขสิทธิ์ในฐานข้อมูล หรือสินค้านี้ถูกปิดการขายแล้ว (ID: ${item.productId})`,
+        }
       }
 
       if (product.stock_quantity < item.quantity) {
@@ -162,7 +164,11 @@ export async function createOrderAction(rawInput: unknown): Promise<CreateOrderR
       },
     })
 
-    revalidatePath('/orders')
+    try {
+      revalidatePath('/orders')
+    } catch {
+      // Ignored outside Next.js request context (e.g. test runner)
+    }
     return { success: true, orderId: order.id }
   } catch (err: any) {
     return { success: false, error: err?.message || 'เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ' }

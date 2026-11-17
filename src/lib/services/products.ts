@@ -1,7 +1,8 @@
-import { createClient } from '@/lib/supabase/client'
 import { createServerClient } from '@/lib/supabase/server'
 import { MOCK_PRODUCTS } from '@/data/mockProducts'
 import { Product } from '@/types/product'
+
+const isProduction = process.env.NODE_ENV === 'production'
 
 export async function getProductsFromDB(): Promise<Product[]> {
   try {
@@ -12,7 +13,21 @@ export async function getProductsFromDB(): Promise<Product[]> {
       .eq('is_active', true)
       .order('created_at', { ascending: true })
 
-    if (error || !data || data.length === 0) {
+    if (error) {
+      console.error('[DATABASE ERROR] Failed to fetch products from Supabase:', error.message)
+      if (isProduction) {
+        // PRODUCTION DATA INTEGRITY RULE: Never fallback to mock data on error!
+        return []
+      }
+      console.warn('[DEV ONLY] Falling back to MOCK_PRODUCTS due to local database error')
+      return MOCK_PRODUCTS
+    }
+
+    if (!data || data.length === 0) {
+      if (isProduction) {
+        // In production, empty database means 0 products to display
+        return []
+      }
       return MOCK_PRODUCTS
     }
 
@@ -46,7 +61,11 @@ export async function getProductsFromDB(): Promise<Product[]> {
       ],
       sampleKeyFormat: item.sample_key_format || 'XXXXX-XXXXX-XXXXX-XXXXX',
     }))
-  } catch {
+  } catch (err: any) {
+    console.error('[UNEXPECTED ERROR] getProductsFromDB:', err?.message)
+    if (isProduction) {
+      return []
+    }
     return MOCK_PRODUCTS
   }
 }
@@ -55,5 +74,12 @@ export async function getProductBySlugFromDB(slug: string): Promise<Product | nu
   const all = await getProductsFromDB()
   const found = all.find((p) => p.slug === slug)
   if (found) return found
+
+  if (isProduction) {
+    // In production, return null immediately so Next.js renders 404 notFound()
+    return null
+  }
+
+  // Development fallback only
   return MOCK_PRODUCTS.find((p) => p.slug === slug) ?? null
 }

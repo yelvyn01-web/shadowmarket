@@ -71,15 +71,22 @@ export default function LoginPage() {
             leftIcon={<Mail className="w-4 h-4" />}
           />
 
-          <Input
-            label="รหัสผ่าน (Password)"
-            type="password"
-            required
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            leftIcon={<Lock className="w-4 h-4" />}
-          />
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-mono text-slate-300">รหัสผ่าน (Password)</label>
+              <Link href="/forgot-password" className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300">
+                ลืมรหัสผ่าน?
+              </Link>
+            </div>
+            <Input
+              type="password"
+              required
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              leftIcon={<Lock className="w-4 h-4" />}
+            />
+          </div>
 
           <Button
             type="submit"
