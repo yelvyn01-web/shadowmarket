@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import {
   ShieldCheck,
   Zap,
@@ -18,14 +19,17 @@ import {
   EyeOff,
   Terminal,
   ShoppingBag,
+  AlertCircle,
 } from 'lucide-react'
 import { useCart } from '@/context/CartContext'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { formatPriceTHB } from '@/lib/utils'
+import { createOrderAction } from '@/actions/orders'
 
 export default function CheckoutPage() {
+  const router = useRouter()
   const { items, subtotal, clearCart } = useCart()
 
   const [paymentMethod, setPaymentMethod] = useState<'promptpay' | 'card'>('promptpay')
@@ -33,22 +37,43 @@ export default function CheckoutPage() {
   const [customerName, setCustomerName] = useState('')
   const [agreeTerms, setAgreeTerms] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [orderCompleted, setOrderCompleted] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [createdOrder, setCreatedOrder] = useState<any>(null)
   const [revealedKeys, setRevealedKeys] = useState<Record<string, boolean>>({})
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null)
 
-  const handleSimulatePayment = (e: React.FormEvent) => {
+  const handleSimulatePayment = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!customerEmail || !agreeTerms) return
 
     setIsProcessing(true)
+    setErrorMessage(null)
 
-    // Simulate safe sandbox transaction verification
-    setTimeout(() => {
-      setIsProcessing(false)
-      setOrderCompleted(true)
+    // Format items for Server Action
+    const payloadItems = items.map((i) => ({
+      productId: i.product.id,
+      quantity: i.quantity,
+    }))
+
+    const res = await createOrderAction({
+      customerEmail,
+      customerName,
+      paymentMethod,
+      items: payloadItems,
+    })
+
+    setIsProcessing(false)
+
+    if (res.success && res.orderId) {
+      setCreatedOrder({
+        orderId: res.orderId,
+        email: customerEmail,
+        amount: subtotal,
+      })
       clearCart()
-    }, 1200)
+    } else {
+      setErrorMessage(res.error || 'เกิดข้อผิดพลาดในการประมวลผลคำสั่งซื้อ')
+    }
   }
 
   const toggleRevealKey = (id: string) => {
@@ -62,7 +87,7 @@ export default function CheckoutPage() {
   }
 
   // If order is completed in Sandbox, show the instant License Vault Delivery screen!
-  if (orderCompleted) {
+  if (createdOrder) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-8">
         {/* Success Header */}
@@ -74,26 +99,26 @@ export default function CheckoutPage() {
             <div>
               <div className="flex items-center gap-2">
                 <Badge variant="emerald" showDot>
-                  SANDBOX VERIFIED
+                  DATABASE ORDER RECORDED
                 </Badge>
                 <span className="text-xs font-mono text-slate-400">
-                  ORDER: #SM-{Math.floor(100000 + Math.random() * 900000)}
+                  ID: #{createdOrder.orderId}
                 </span>
               </div>
               <h1 className="text-xl sm:text-2xl font-black text-white font-sans mt-0.5">
-                การจำลองคำสั่งซื้อสำเร็จเรียบร้อย!
+                บันทึกคำสั่งซื้อลงฐานข้อมูลเรียบร้อยแล้ว!
               </h1>
             </div>
           </div>
 
           <p className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed">
-            ระบบได้ทำการสร้างคำสั่งซื้อในโหมดทดสอบ (Sandbox) และจำลองการส่งมอบคีย์ลิขสิทธิ์ซอฟต์แวร์เข้ารหัสให้กับอีเมล{' '}
-            <strong className="text-cyan-400 font-mono">{customerEmail || 'customer@example.com'}</strong> เรียบร้อยแล้ว
+            ระบบได้บันทึกคำสั่งซื้อของคุณลงในฐานข้อมูล Supabase PostgreSQL (ตาราง `orders` และ `order_items`) และจำลองการส่งมอบคีย์ไปยังอีเมล{' '}
+            <strong className="text-cyan-400 font-mono">{createdOrder.email}</strong> เรียบร้อยแล้ว
           </p>
 
           <div className="p-3 bg-slate-950 border border-slate-800 rounded text-xs font-mono text-amber-400 flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-            <span>หมายเหตุ: ระบบอยู่ในโหมดทดสอบ (Sandbox Simulation) ไม่มีการตัดเงินจริง</span>
+            <span>โหมดการทำงาน: Sandbox Verification (บันทึกข้อมูลจริงในฐานข้อมูล โดยไม่มีการตัดเงินจริง)</span>
           </div>
         </div>
 
@@ -102,22 +127,21 @@ export default function CheckoutPage() {
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div className="flex items-center gap-2 text-xs font-mono text-cyan-400 font-bold">
               <Terminal className="w-4 h-4" />
-              <span>รหัสลิขสิทธิ์ของคุณ (DECRYPTED LICENSE VAULT)</span>
+              <span>รหัสลิขสิทธิ์จำลอง (ENCRYPTED LICENSE VAULT)</span>
             </div>
             <Badge variant="cyan" size="sm">
-              AES-256-GCM
+              AES-256-GCM READY
             </Badge>
           </div>
 
           <div className="space-y-4">
-            {/* Show mock delivered key */}
             <div className="p-4 bg-slate-950 border border-slate-800 rounded-sm space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono font-bold text-slate-200">
-                  Microsoft Windows 11 Pro Retail License (1 PC)
+                  รายการสั่งซื้อ #{createdOrder.orderId.slice(0, 8)}...
                 </span>
                 <Badge variant="emerald" size="sm">
-                  พร้อมใช้งาน (Active)
+                  สถานะ: รอส่งมอบอัตโนมัติ
                 </Badge>
               </div>
 
@@ -153,19 +177,15 @@ export default function CheckoutPage() {
                   </Button>
                 </div>
               </div>
-
-              <p className="text-[11px] font-sans text-slate-400">
-                นำคีย์นี้ไปกรอกในหน้า Settings &gt; System &gt; Activation บนเครื่อง Windows 11 ของคุณเพื่อเปิดใช้งาน
-              </p>
             </div>
           </div>
 
           <div className="pt-4 flex flex-wrap gap-3">
-            <Link href="/products">
-              <Button variant="primary">เลือกซื้อสินค้าต่อ</Button>
+            <Link href={`/orders/${createdOrder.orderId}`}>
+              <Button variant="primary">ดูรายละเอียดใบเสร็จคำสั่งซื้อ</Button>
             </Link>
-            <Link href="/">
-              <Button variant="secondary">กลับสู่หน้าหลัก</Button>
+            <Link href="/products">
+              <Button variant="secondary">เลือกซื้อสินค้าต่อ</Button>
             </Link>
           </div>
         </div>
@@ -181,13 +201,20 @@ export default function CheckoutPage() {
         <div className="flex items-center gap-2">
           <Badge variant="cyan">CHECKOUT GATEWAY</Badge>
           <span className="text-xs font-mono text-emerald-400">
-            [MODE: SANDBOX VERIFICATION]
+            [PIPELINE: POSTGRESQL ATOMIC WRITE]
           </span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-black text-white font-sans tracking-tight">
           ยืนยันคำสั่งซื้อและการชำระเงิน
         </h1>
       </div>
+
+      {errorMessage && (
+        <div className="p-4 bg-rose-950/70 border border-rose-500/50 rounded flex items-start gap-3 text-xs text-rose-300 font-sans">
+          <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Left Form (7 cols) */}
@@ -207,7 +234,7 @@ export default function CheckoutPage() {
                 placeholder="you@example.com"
                 value={customerEmail}
                 onChange={(e) => setCustomerEmail(e.target.value)}
-                helperText="ระบบจะส่งใบเสร็จและคีย์เข้ารหัสไปยังอีเมลนี้"
+                helperText="ระบบจะส่งใบเสร็จและบันทึกคำสั่งซื้อไปยังอีเมลนี้"
               />
               <Input
                 label="ชื่อผู้สั่งซื้อ (Optional)"
@@ -290,7 +317,7 @@ export default function CheckoutPage() {
                       ยอดชำระ: {formatPriceTHB(subtotal)} (THB)
                     </p>
                     <p className="text-[10px] text-emerald-400">
-                      * ในการกดปุ่มด้านล่าง ระบบจะจำลองการสแกนและยืนยันยอดสำเร็จอัตโนมัติ
+                      * คำสั่งซื้อจะถูกบันทึกจริงลงฐานข้อมูล PostgreSQL ทันทีที่คุณกดยืนยัน
                     </p>
                   </div>
                 </div>
@@ -322,7 +349,7 @@ export default function CheckoutPage() {
                 className="mt-0.5 rounded border-slate-700 bg-slate-950 text-cyan-500 focus:ring-cyan-400"
               />
               <span className="text-xs text-slate-300 leading-relaxed font-sans">
-                ข้าพเจ้ารับทราบว่าสินค้าทั้งหมดบน ShadowMarket คือซอฟต์แวร์และคีย์ดิจิทัลที่ถูกต้องตามกฎหมาย และยอมรับเงื่อนไขการส่งมอบรหัสผ่านระบบเข้ารหัส
+                ข้าพเจ้ารับทราบว่าสินค้าทั้งหมดบน ShadowMarket คือซอฟต์แวร์และคีย์ดิจิทัลที่ถูกต้องตามกฎหมาย และยินยอมให้บันทึกคำสั่งซื้อลงระบบ
               </span>
             </label>
           </div>
@@ -334,10 +361,10 @@ export default function CheckoutPage() {
             size="lg"
             className="w-full text-sm font-mono"
             isLoading={isProcessing}
-            disabled={!agreeTerms || !customerEmail}
+            disabled={!agreeTerms || !customerEmail || items.length === 0}
             rightIcon={<ArrowRight className="w-4 h-4" />}
           >
-            {isProcessing ? 'กำลังตรวจสอบและถอดรหัสคีย์...' : 'ยืนยันการชำระเงินจำลอง (SIMULATE ORDER)'}
+            {isProcessing ? 'กำลังบันทึกคำสั่งซื้อลงฐานข้อมูล...' : 'ยืนยันและสร้างคำสั่งซื้อ (SUBMIT ORDER)'}
           </Button>
         </form>
 
@@ -351,7 +378,7 @@ export default function CheckoutPage() {
             <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
               {items.length === 0 ? (
                 <div className="text-xs font-mono text-slate-500 py-4 text-center">
-                  (รายการสินค้าตัวอย่าง: Windows 11 Pro Retail - ฿1,290)
+                  (ไม่มีรายการสินค้าในตะกร้า)
                 </div>
               ) : (
                 items.map(({ product, quantity }) => {
@@ -377,7 +404,7 @@ export default function CheckoutPage() {
             <div className="pt-3 border-t border-slate-800 space-y-2 text-xs font-mono">
               <div className="flex justify-between text-slate-400">
                 <span>ยอดรวมสินค้า</span>
-                <span>{formatPriceTHB(subtotal || 1290)}</span>
+                <span>{formatPriceTHB(subtotal)}</span>
               </div>
               <div className="flex justify-between text-slate-400">
                 <span>ค่าจัดส่งดิจิทัล</span>
@@ -386,7 +413,7 @@ export default function CheckoutPage() {
               <div className="pt-2 border-t border-slate-800 flex justify-between items-baseline text-sm font-bold">
                 <span className="text-white">ยอดสุทธิ</span>
                 <span className="text-base sm:text-lg text-cyan-400 font-mono">
-                  {formatPriceTHB(subtotal || 1290)}
+                  {formatPriceTHB(subtotal)}
                 </span>
               </div>
             </div>
@@ -394,10 +421,10 @@ export default function CheckoutPage() {
             <div className="p-3 bg-slate-950 border border-slate-800 rounded text-[11px] font-mono text-slate-400 space-y-1">
               <div className="flex items-center gap-1.5 text-cyan-400">
                 <ShieldCheck className="w-4 h-4" />
-                <span>SECURITY ESCROW GUARANTEE</span>
+                <span>POSTGRESQL TRANSACTION GUARD</span>
               </div>
               <p className="font-sans text-slate-400">
-                รับประกันคีย์แท้ใช้งานได้จริง หากพบปัญหามีระบบเปลี่ยนคีย์ใหม่หรือคืนเงินทันที
+                คำสั่งซื้อของคุณจะได้รับการบันทึกอย่างปลอดภัย พร้อมการตัดสต็อกคีย์อัตโนมัติ
               </p>
             </div>
           </div>

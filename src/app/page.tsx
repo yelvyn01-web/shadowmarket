@@ -12,14 +12,15 @@ import {
   Award,
   AlertTriangle,
 } from 'lucide-react'
-import { MOCK_PRODUCTS } from '@/data/mockProducts'
+import { getProductsFromDB } from '@/lib/services/products'
 import { ProductCard } from '@/components/shop/ProductCard'
 import { LicenseRevealPreview } from '@/components/shop/LicenseRevealPreview'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 
-export default function HomePage() {
-  const featuredProducts = MOCK_PRODUCTS.slice(0, 4)
+export default async function HomePage() {
+  const allProducts = await getProductsFromDB()
+  const featuredProducts = allProducts.slice(0, 4)
 
   const categories = [
     { name: 'ระบบปฏิบัติการ', query: 'operating-system', icon: '💻', count: 'Windows 11 / Pro' },
@@ -175,7 +176,7 @@ export default function HomePage() {
 
           <Link href="/products">
             <Button variant="outline" size="sm" rightIcon={<ArrowRight className="w-4 h-4" />}>
-              ดูคลังสินค้าทั้งหมด ({MOCK_PRODUCTS.length})
+              ดูคลังสินค้าทั้งหมด ({allProducts.length})
             </Button>
           </Link>
         </div>

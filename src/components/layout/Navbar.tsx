@@ -56,6 +56,7 @@ export function Navbar() {
   const navLinks = [
     { label: 'หน้าแรก', href: '/' },
     { label: 'สินค้าทั้งหมด', href: '/products' },
+    { label: 'คำสั่งซื้อของฉัน', href: '/orders' },
     { label: 'ระบบปฏิบัติการ', href: '/products?category=operating-system' },
     { label: 'เครื่องมือนักพัฒนา', href: '/products?category=developer-tools' },
     { label: 'ความปลอดภัย & VPN', href: '/products?category=security-vpn' },
